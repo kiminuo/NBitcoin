@@ -589,16 +589,16 @@ namespace NBitcoin
 			return Encoders.Hex.EncodeData(_Script);
 		}
 
-		Script _PaymentScript;
+		Script? _PaymentScript;
 
 		/// <summary>
 		/// Get the P2SH scriptPubKey of this script
 		/// </summary>
-		public Script PaymentScript
+		public Script? PaymentScript
 		{
 			get
 			{
-				return _PaymentScript ?? (_PaymentScript = PayToScriptHashTemplate.Instance.GenerateScriptPubKey(Hash));
+				return _PaymentScript;
 			}
 		}
 
@@ -701,20 +701,20 @@ namespace NBitcoin
 			return n;
 		}
 
-		ScriptId _Hash;
-		public ScriptId Hash
+		ScriptId? _Hash;
+		public ScriptId? Hash
 		{
 			get
 			{
-				return _Hash ?? (_Hash = new ScriptId(this));
+				return _Hash;
 			}
 		}
-		WitScriptId _WitHash;
-		public WitScriptId WitHash
+		WitScriptId? _WitHash;
+		public WitScriptId? WitHash
 		{
 			get
 			{
-				return _WitHash ?? (_WitHash = new WitScriptId(this));
+				return _WitHash;
 			}
 		}
 

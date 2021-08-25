@@ -1,4 +1,6 @@
-﻿using System.Runtime.InteropServices;
+﻿#nullable disable
+
+using System.Runtime.InteropServices;
 using NBitcoin.DataEncoders;
 using System;
 using System.Collections.Generic;

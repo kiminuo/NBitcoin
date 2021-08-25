@@ -1051,9 +1051,9 @@ namespace NBitcoin
 			var unused = new OutPoint(uint256.Zero, 0);
 			foreach (var redeem in redeems)
 			{
-				var p2sh = redeem.Hash.ScriptPubKey;
-				var p2wsh = redeem.WitHash.ScriptPubKey;
-				var p2shp2wsh = redeem.WitHash.ScriptPubKey.Hash.ScriptPubKey;
+				var p2sh = redeem.GetHashOrSetNew().ScriptPubKey;
+				var p2wsh = redeem.GetWitHashOrSetNew().ScriptPubKey;
+				var p2shp2wsh = redeem.GetWitHashOrSetNew().ScriptPubKey.GetHashOrSetNew().ScriptPubKey;
 				foreach (var o in this.Inputs.OfType<PSBTCoin>().Concat(this.Outputs))
 				{
 					if (o is PSBTInput ii && ii.IsFinalized())
@@ -1074,7 +1074,7 @@ namespace NBitcoin
 					else if (txout.ScriptPubKey == p2shp2wsh)
 					{
 						o.WitnessScript = redeem;
-						o.RedeemScript = redeem.WitHash.ScriptPubKey;
+						o.RedeemScript = redeem.GetWitHashOrSetNew().ScriptPubKey;
 						if (o is PSBTInput i)
 							i.TrySlimUTXO();
 					}

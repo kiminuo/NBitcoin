@@ -10,7 +10,7 @@ namespace NBitcoin.Tests.Helpers
 			var outpoint = RandOutpoint();
 			if(!p2sh)
 				return new Coin(outpoint, new TxOut(amount, scriptPubKey));
-			return new ScriptCoin(outpoint, new TxOut(amount, scriptPubKey.Hash), scriptPubKey);
+			return new ScriptCoin(outpoint, new TxOut(amount, scriptPubKey.GetHashOrSetNew()), scriptPubKey);
 		}
 		internal static Coin RandomCoin(Money amount, Key receiver)
 		{
@@ -26,8 +26,8 @@ namespace NBitcoin.Tests.Helpers
 		{
 			return new List<ScriptCoin> {
 				RandomCoin(Money.Coins(0.5m), scriptPubKey, true) as ScriptCoin,
-				new ScriptCoin(RandomCoin(Money.Coins(0.5m), scriptPubKey.WitHash), scriptPubKey),
-				new ScriptCoin(RandomCoin(Money.Coins(0.5m), scriptPubKey.WitHash.ScriptPubKey.Hash), scriptPubKey)
+				new ScriptCoin(RandomCoin(Money.Coins(0.5m), scriptPubKey.GetWitHashOrSetNew()), scriptPubKey),
+				new ScriptCoin(RandomCoin(Money.Coins(0.5m), scriptPubKey.GetWitHashOrSetNew().ScriptPubKey.GetHashOrSetNew()), scriptPubKey)
 			};
 		}
 

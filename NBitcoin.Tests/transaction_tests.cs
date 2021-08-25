@@ -236,13 +236,13 @@ namespace NBitcoin.Tests
 			tx.Sign(new[] { key }, CreateFakeCoins(tx.Inputs, scriptPubKey));
 			AssertCorrectlySigned(tx, new TxOut(null, scriptPubKey));
 			clone.Sign(new[] { key }, CreateFakeCoins(clone.Inputs, scriptPubKey, true));
-			AssertCorrectlySigned(clone, new TxOut(TxOut.NullMoney, scriptPubKey.Hash.ScriptPubKey));
+			AssertCorrectlySigned(clone, new TxOut(TxOut.NullMoney, scriptPubKey.GetHashOrSetNew().ScriptPubKey));
 		}
 
 		private ICoin[] CreateFakeCoins(TxInList inputs, Script scriptPubKey, bool p2sh = false)
 		{
 			var coins = inputs.Select(i => new Coin(i.PrevOut, inputs.Transaction.Outputs.CreateNewTxOut(Money.Coins(0.1m), p2sh ?
-				scriptPubKey.Hash.ScriptPubKey :
+				scriptPubKey.GetHashOrSetNew().ScriptPubKey :
 				scriptPubKey))).ToArray();
 			if (p2sh)
 			{
@@ -676,8 +676,8 @@ namespace NBitcoin.Tests
 			var goldRedeem = PayToMultiSigTemplate.Instance
 									.GenerateScriptPubKey(2, new[] { satoshi.PubKey, bob.PubKey, alice.PubKey });
 
-			var goldScriptPubKey = goldRedeem.Hash.ScriptPubKey;
-			var goldAssetId = goldScriptPubKey.Hash.ToAssetId();
+			var goldScriptPubKey = goldRedeem.GetHashOrSetNew().ScriptPubKey;
+			var goldAssetId = goldScriptPubKey.GetHashOrSetNew().ToAssetId();
 
 			var issuanceCoin = new IssuanceCoin(
 				new ScriptCoin(RandOutpoint(), new TxOut(Money.Satoshis(576), goldScriptPubKey), goldRedeem));
@@ -723,7 +723,7 @@ namespace NBitcoin.Tests
 
 			//This gives you a Bech32 address (currently not really interoperable in wallets, so you need to convert it into P2SH)
 			var address = k.PubKey.WitHash.GetAddress(Network.Main);
-			var p2sh = (BitcoinScriptAddress)address.ScriptPubKey.Hash.GetAddress(Network.Main);
+			var p2sh = (BitcoinScriptAddress)address.ScriptPubKey.GetHashOrSetNew().GetAddress(Network.Main);
 			//p2sh is now an interoperable P2SH segwit address
 
 			//For spending, it works the same as a a normal P2SH
@@ -956,8 +956,8 @@ namespace NBitcoin.Tests
 		{
 			var gold = new Key();
 			var silver = new Key();
-			var goldId = gold.PubKey.ScriptPubKey.Hash.ToAssetId();
-			var silverId = silver.PubKey.ScriptPubKey.Hash.ToAssetId();
+			var goldId = gold.PubKey.ScriptPubKey.GetHashOrSetNew().ToAssetId();
+			var silverId = silver.PubKey.ScriptPubKey.GetHashOrSetNew().ToAssetId();
 
 			var satoshi = new Key();
 			var bob = new Key();
@@ -1251,8 +1251,8 @@ namespace NBitcoin.Tests
 		{
 			var gold = new Key();
 			var silver = new Key();
-			var goldId = gold.PubKey.ScriptPubKey.Hash.ToAssetId();
-			var silverId = silver.PubKey.ScriptPubKey.Hash.ToAssetId();
+			var goldId = gold.PubKey.ScriptPubKey.GetHashOrSetNew().ToAssetId();
+			var silverId = silver.PubKey.ScriptPubKey.GetHashOrSetNew().ToAssetId();
 
 			var satoshi = new Key();
 			var bob = new Key();
@@ -1759,7 +1759,7 @@ namespace NBitcoin.Tests
 			var outpoint = RandOutpoint();
 			if (!p2sh)
 				return new Coin(outpoint, new TxOut(amount, scriptPubKey));
-			return new ScriptCoin(outpoint, new TxOut(amount, scriptPubKey.Hash), scriptPubKey);
+			return new ScriptCoin(outpoint, new TxOut(amount, scriptPubKey.GetHashOrSetNew()), scriptPubKey);
 		}
 		private Coin RandomCoin(Money amount, Key receiver)
 		{
@@ -1962,22 +1962,22 @@ namespace NBitcoin.Tests
 			Key k = new Key();
 			var coin = RandomCoin(Money.Zero, k);
 			Assert.True(coin.CanGetScriptCode);
-			coin.ScriptPubKey = k.PubKey.ScriptPubKey.Hash.ScriptPubKey;
+			coin.ScriptPubKey = k.PubKey.ScriptPubKey.GetHashOrSetNew().ScriptPubKey;
 			Assert.False(coin.CanGetScriptCode);
 			Assert.Throws<InvalidOperationException>(() => coin.GetScriptCode());
 			Assert.True(coin.ToScriptCoin(k.PubKey.ScriptPubKey).CanGetScriptCode);
 
-			coin.ScriptPubKey = k.PubKey.ScriptPubKey.WitHash.ScriptPubKey;
+			coin.ScriptPubKey = k.PubKey.ScriptPubKey.GetWitHashOrSetNew().ScriptPubKey;
 			Assert.False(coin.CanGetScriptCode);
 			Assert.Throws<InvalidOperationException>(() => coin.GetScriptCode());
 			Assert.True(coin.ToScriptCoin(k.PubKey.ScriptPubKey).CanGetScriptCode);
 
-			coin.ScriptPubKey = k.PubKey.ScriptPubKey.WitHash.ScriptPubKey.Hash.ScriptPubKey;
+			coin.ScriptPubKey = k.PubKey.ScriptPubKey.GetWitHashOrSetNew().ScriptPubKey.GetHashOrSetNew().ScriptPubKey;
 			Assert.False(coin.CanGetScriptCode);
 			Assert.Throws<InvalidOperationException>(() => coin.GetScriptCode());
 
 			var badCoin = coin.ToScriptCoin(k.PubKey.ScriptPubKey);
-			badCoin.Redeem = k.PubKey.ScriptPubKey.WitHash.ScriptPubKey;
+			badCoin.Redeem = k.PubKey.ScriptPubKey.GetWitHashOrSetNew().ScriptPubKey;
 			Assert.False(badCoin.CanGetScriptCode);
 			Assert.Throws<InvalidOperationException>(() => badCoin.GetScriptCode());
 			Assert.True(coin.ToScriptCoin(k.PubKey.ScriptPubKey).CanGetScriptCode);
@@ -2021,7 +2021,7 @@ namespace NBitcoin.Tests
 
 			//P2WSH
 			previousTx = builder.Network.Consensus.ConsensusFactory.CreateTransaction();
-			previousTx.Outputs.Add(new TxOut(Money.Coins(1.0m), alice.PubKey.ScriptPubKey.WitHash));
+			previousTx.Outputs.Add(new TxOut(Money.Coins(1.0m), alice.PubKey.ScriptPubKey.GetWitHashOrSetNew()));
 			previousCoin = previousTx.Outputs.AsCoins().First();
 			ScriptCoin witnessCoin = new ScriptCoin(previousCoin, alice.PubKey.ScriptPubKey);
 			builder = Network.CreateTransactionBuilder();
@@ -2038,7 +2038,7 @@ namespace NBitcoin.Tests
 
 			//P2SH(P2WPKH)
 			previousTx = Network.CreateTransaction();
-			previousTx.Outputs.Add(new TxOut(Money.Coins(1.0m), alice.PubKey.WitHash.ScriptPubKey.Hash));
+			previousTx.Outputs.Add(new TxOut(Money.Coins(1.0m), alice.PubKey.WitHash.ScriptPubKey.GetHashOrSetNew()));
 			previousCoin = previousTx.Outputs.AsCoins().First();
 			ScriptCoin scriptCoin = new ScriptCoin(previousCoin, alice.PubKey.WitHash.ScriptPubKey);
 			builder = Network.CreateTransactionBuilder();
@@ -2054,7 +2054,7 @@ namespace NBitcoin.Tests
 
 			//P2SH(P2WSH)
 			previousTx = Network.CreateTransaction();
-			previousTx.Outputs.Add(new TxOut(Money.Coins(1.0m), alice.PubKey.ScriptPubKey.WitHash.ScriptPubKey.Hash));
+			previousTx.Outputs.Add(new TxOut(Money.Coins(1.0m), alice.PubKey.ScriptPubKey.GetWitHashOrSetNew().ScriptPubKey.GetHashOrSetNew()));
 			previousCoin = previousTx.Outputs.AsCoins().First();
 
 			witnessCoin = new ScriptCoin(previousCoin, alice.PubKey.ScriptPubKey);
@@ -2084,7 +2084,7 @@ namespace NBitcoin.Tests
 			var bob = new Key();
 			//P2SH(P2WSH)
 			var previousTx = Network.CreateTransaction();
-			previousTx.Outputs.Add(new TxOut(Money.Coins(1.0m), alice.PubKey.ScriptPubKey.WitHash.ScriptPubKey.Hash));
+			previousTx.Outputs.Add(new TxOut(Money.Coins(1.0m), alice.PubKey.ScriptPubKey.GetWitHashOrSetNew().ScriptPubKey.GetHashOrSetNew()));
 			var previousCoin = previousTx.Outputs.AsCoins().First();
 
 			var witnessCoin = new ScriptCoin(previousCoin, alice.PubKey.ScriptPubKey);
@@ -2288,9 +2288,9 @@ namespace NBitcoin.Tests
 			var multiSigPubKey = PayToMultiSigTemplate.Instance.GenerateScriptPubKey(2, keys.Select(k => k.PubKey).Take(3).ToArray());
 			var pubKeyPubKey = PayToPubkeyTemplate.Instance.GenerateScriptPubKey(keys[4].PubKey);
 			var pubKeyHashPubKey = PayToPubkeyHashTemplate.Instance.GenerateScriptPubKey(keys[4].PubKey.Hash);
-			var scriptHashPubKey1 = PayToScriptHashTemplate.Instance.GenerateScriptPubKey(multiSigPubKey.Hash);
-			var scriptHashPubKey2 = PayToScriptHashTemplate.Instance.GenerateScriptPubKey(pubKeyPubKey.Hash);
-			var scriptHashPubKey3 = PayToScriptHashTemplate.Instance.GenerateScriptPubKey(pubKeyHashPubKey.Hash);
+			var scriptHashPubKey1 = PayToScriptHashTemplate.Instance.GenerateScriptPubKey(multiSigPubKey.GetHashOrSetNew());
+			var scriptHashPubKey2 = PayToScriptHashTemplate.Instance.GenerateScriptPubKey(pubKeyPubKey.GetHashOrSetNew());
+			var scriptHashPubKey3 = PayToScriptHashTemplate.Instance.GenerateScriptPubKey(pubKeyHashPubKey.GetHashOrSetNew());
 
 
 			var coins = new[] { multiSigPubKey, pubKeyPubKey, pubKeyHashPubKey }.Select((script, i) =>
@@ -2327,7 +2327,7 @@ namespace NBitcoin.Tests
 			new ScriptCoin
 				(
 				new OutPoint(Rand(), i),
-				new TxOut(new Money((i + 1) * Money.COIN), _.redeem.WitHash.ScriptPubKey.Hash),
+				new TxOut(new Money((i + 1) * Money.COIN), _.redeem.GetWitHashOrSetNew().ScriptPubKey.GetHashOrSetNew()),
 				_.redeem
 				)).ToList();
 			var a = witCoins.Select(c => c.Amount).Sum();
@@ -2556,7 +2556,7 @@ namespace NBitcoin.Tests
 			var funding = Transaction.Parse("020000000001ee1de792f9390a96dc619ed809aff7e9441e961fbbc259e157d5320a692e1f5c0d00000000feffffff0301e8298b04333ead007973ccb969ba36772c9fcdaf8747cc5dd372e79898debd7a010000000005f5e1000017a914840c45c52492c79b61cced87cb0f033dd5365a168701e8298b04333ead007973ccb969ba36772c9fcdaf8747cc5dd372e79898debd7a01000001e8ebcb2618001976a9147a27ab132bba2730160b4fe1422f3a5f741f9f6388ac01e8298b04333ead007973ccb969ba36772c9fcdaf8747cc5dd372e79898debd7a0100000000000000e8000000000000", Altcoins.Liquid.Instance.Regtest);
 			var funded = BitcoinAddress.Create("XPPSkBFHS7arWiFRRkEhoieCHfXxxFwQa1", Altcoins.Liquid.Instance.Regtest);
 			var redeem = new Script(Encoders.Hex.DecodeData("00149bf32fe6110a55eef7057d74125ba8e5746cd7bd"));
-			Assert.Equal(funded, redeem.Hash.GetAddress(Altcoins.Liquid.Instance.Regtest));
+			Assert.Equal(funded, redeem.GetHashOrSetNew().GetAddress(Altcoins.Liquid.Instance.Regtest));
 			var previous = funding.Outputs.AsCoins().First(c => c.ScriptPubKey == funded.ScriptPubKey);
 
 			foreach (var signed in new[]
@@ -2624,7 +2624,7 @@ namespace NBitcoin.Tests
 		{
 			var fromKey = new Key();
 			var redeem = fromKey.PubKey.WitHash.ScriptPubKey;
-			var from = redeem.Hash.ScriptPubKey;
+			var from = redeem.GetHashOrSetNew().ScriptPubKey;
 			var p2wpkh = new Key().PubKey.WitHash.ScriptPubKey;
 
 			var oneSatPerByte = new FeeRate(Money.Satoshis(1), 1);
@@ -2700,7 +2700,7 @@ namespace NBitcoin.Tests
 
 			//First: combine the three keys into a multisig address
 			var redeem = PayToMultiSigTemplate.Instance.GenerateScriptPubKey(2, privKeys.Select(k => k.PubKey).ToArray());
-			var scriptAddress = redeem.Hash.GetAddress(Network.Main);
+			var scriptAddress = redeem.GetHashOrSetNew().GetAddress(Network.Main);
 			Assert.Equal("3QJmV3qfvL9SuYo34YihAf3sRCW3qSinyC", scriptAddress.ToString());
 
 			// Next, create a transaction to send funds into that multisig. Transaction d6f72... is
@@ -3071,7 +3071,7 @@ namespace NBitcoin.Tests
 		{
 			var bob = new Key().GetWif(Network.RegTest);
 			Transaction tx = Network.CreateTransaction();
-			tx.Outputs.Add(new TxOut(Money.Coins(1.0m), bob.PubKey.ScriptPubKey.WitHash));
+			tx.Outputs.Add(new TxOut(Money.Coins(1.0m), bob.PubKey.ScriptPubKey.GetWitHashOrSetNew()));
 			ScriptCoin coin = new ScriptCoin(tx.Outputs.AsCoins().First(), bob.PubKey.ScriptPubKey);
 
 			Transaction spending = Network.CreateTransaction();
@@ -3286,7 +3286,7 @@ namespace NBitcoin.Tests
 		public void CheckScriptCoinIsCoherent()
 		{
 			Key key = new Key();
-			var c = RandomCoin(Money.Zero, key.PubKey.ScriptPubKey.Hash);
+			var c = RandomCoin(Money.Zero, key.PubKey.ScriptPubKey.GetHashOrSetNew());
 
 			//P2SH
 			var scriptCoin = new ScriptCoin(c, key.PubKey.ScriptPubKey);
@@ -3295,28 +3295,28 @@ namespace NBitcoin.Tests
 			Assert.True(scriptCoin.GetHashVersion() == HashVersion.Original);
 
 			//P2SH(P2WPKH)
-			c.ScriptPubKey = key.PubKey.WitHash.ScriptPubKey.Hash.ScriptPubKey;
+			c.ScriptPubKey = key.PubKey.WitHash.ScriptPubKey.GetHashOrSetNew().ScriptPubKey;
 			scriptCoin = new ScriptCoin(c, key.PubKey.WitHash.ScriptPubKey);
 			Assert.True(scriptCoin.RedeemType == RedeemType.P2SH);
 			Assert.True(scriptCoin.IsP2SH);
 			Assert.True(scriptCoin.GetHashVersion() == HashVersion.WitnessV0);
 
 			//P2WSH
-			c.ScriptPubKey = key.PubKey.ScriptPubKey.WitHash.ScriptPubKey;
+			c.ScriptPubKey = key.PubKey.ScriptPubKey.GetWitHashOrSetNew().ScriptPubKey;
 			scriptCoin = new ScriptCoin(c, key.PubKey.ScriptPubKey);
 			Assert.True(scriptCoin.RedeemType == RedeemType.WitnessV0);
 			Assert.True(!scriptCoin.IsP2SH);
 			Assert.True(scriptCoin.GetHashVersion() == HashVersion.WitnessV0);
 
 			//P2SH(P2WSH)
-			c.ScriptPubKey = key.PubKey.ScriptPubKey.WitHash.ScriptPubKey.Hash.ScriptPubKey;
+			c.ScriptPubKey = key.PubKey.ScriptPubKey.GetWitHashOrSetNew().ScriptPubKey.GetHashOrSetNew().ScriptPubKey;
 			scriptCoin = new ScriptCoin(c, key.PubKey.ScriptPubKey);
 			Assert.True(scriptCoin.RedeemType == RedeemType.WitnessV0);
 			Assert.True(scriptCoin.IsP2SH);
 			Assert.True(scriptCoin.GetHashVersion() == HashVersion.WitnessV0);
 
 
-			Assert.Throws<ArgumentException>(() => new ScriptCoin(c, key.PubKey.ScriptPubKey.WitHash.ScriptPubKey));
+			Assert.Throws<ArgumentException>(() => new ScriptCoin(c, key.PubKey.ScriptPubKey.GetWitHashOrSetNew().ScriptPubKey));
 		}
 
 		[Fact]
@@ -3326,7 +3326,7 @@ namespace NBitcoin.Tests
 			var scriptPubKey = new Script(OpcodeType.OP_DROP, OpcodeType.OP_TRUE);
 			ICoin coin1 = new Coin(
 								new uint256("0000000000000000000000000000000000000000000000000000000000000100"), 0,
-								Money.Satoshis(1000), scriptPubKey.WitHash.ScriptPubKey);
+								Money.Satoshis(1000), scriptPubKey.GetWitHashOrSetNew().ScriptPubKey);
 			coin1 = new ScriptCoin(coin1, scriptPubKey);
 			Transaction tx = Network.CreateTransaction();
 			tx.Inputs.Add(new TxIn(coin1.Outpoint));
@@ -4033,8 +4033,8 @@ namespace NBitcoin.Tests
 			CheckWithFlag(output1, input2, ScriptVerify.Standard, false);
 
 			// P2SH pay-to-compressed-pubkey.
-			CreateCreditAndSpend(keystore, scriptPubkey1.Hash.ScriptPubKey, ref output1, ref input1);
-			CreateCreditAndSpend(keystore, scriptPubkey2.Hash.ScriptPubKey, ref output2, ref input2);
+			CreateCreditAndSpend(keystore, scriptPubkey1.GetHashOrSetNew().ScriptPubKey, ref output1, ref input1);
+			CreateCreditAndSpend(keystore, scriptPubkey2.GetHashOrSetNew().ScriptPubKey, ref output2, ref input2);
 			ReplaceRedeemScript(input2.Inputs[0], scriptPubkey1);
 			CheckWithFlag(output1, input1, 0, true);
 			CheckWithFlag(output1, input1, ScriptVerify.P2SH, true);
@@ -4058,8 +4058,8 @@ namespace NBitcoin.Tests
 			CheckWithFlag(output1, input2, ScriptVerify.Standard, false);
 
 			// P2SH witness pay-to-compressed-pubkey (v0).
-			CreateCreditAndSpend(keystore, GetScriptForWitness(scriptPubkey1).Hash.ScriptPubKey, ref output1, ref input1);
-			CreateCreditAndSpend(keystore, GetScriptForWitness(scriptPubkey2).Hash.ScriptPubKey, ref output2, ref input2);
+			CreateCreditAndSpend(keystore, GetScriptForWitness(scriptPubkey1).GetHashOrSetNew().ScriptPubKey, ref output1, ref input1);
+			CreateCreditAndSpend(keystore, GetScriptForWitness(scriptPubkey2).GetHashOrSetNew().ScriptPubKey, ref output2, ref input2);
 			ReplaceRedeemScript(input2.Inputs[0], GetScriptForWitness(scriptPubkey1));
 			CheckWithFlag(output1, input1, 0, true);
 			CheckWithFlag(output1, input1, ScriptVerify.P2SH, true);
@@ -4083,8 +4083,8 @@ namespace NBitcoin.Tests
 			CheckWithFlag(output1, input2, ScriptVerify.Standard, false);
 
 			// P2SH pay-to-uncompressed-pubkey.
-			CreateCreditAndSpend(keystore, scriptPubkey1L.Hash.ScriptPubKey, ref output1, ref input1);
-			CreateCreditAndSpend(keystore, scriptPubkey2L.Hash.ScriptPubKey, ref output2, ref input2);
+			CreateCreditAndSpend(keystore, scriptPubkey1L.GetHashOrSetNew().ScriptPubKey, ref output1, ref input1);
+			CreateCreditAndSpend(keystore, scriptPubkey2L.GetHashOrSetNew().ScriptPubKey, ref output2, ref input2);
 			ReplaceRedeemScript(input2.Inputs[0], scriptPubkey1L);
 			CheckWithFlag(output1, input1, 0, true);
 			CheckWithFlag(output1, input1, ScriptVerify.P2SH, true);
@@ -4108,8 +4108,8 @@ namespace NBitcoin.Tests
 			CheckWithFlag(output1, input2, ScriptVerify.Standard, false);
 
 			// P2SH witness pay-to-uncompressed-pubkey (v1).
-			CreateCreditAndSpend(keystore, GetScriptForWitness(scriptPubkey1L).Hash.ScriptPubKey, ref output1, ref input1);
-			CreateCreditAndSpend(keystore, GetScriptForWitness(scriptPubkey2L).Hash.ScriptPubKey, ref output2, ref input2);
+			CreateCreditAndSpend(keystore, GetScriptForWitness(scriptPubkey1L).GetHashOrSetNew().ScriptPubKey, ref output1, ref input1);
+			CreateCreditAndSpend(keystore, GetScriptForWitness(scriptPubkey2L).GetHashOrSetNew().ScriptPubKey, ref output2, ref input2);
 			ReplaceRedeemScript(input2.Inputs[0], GetScriptForWitness(scriptPubkey1L));
 			CheckWithFlag(output1, input1, 0, true);
 			CheckWithFlag(output1, input1, ScriptVerify.P2SH, true);
@@ -4130,10 +4130,10 @@ namespace NBitcoin.Tests
 			CheckWithFlag(output1, input1, ScriptVerify.Standard, true);
 
 			// P2SH 2-of-2 multisig
-			CreateCreditAndSpend(keystore, scriptMulti.Hash.ScriptPubKey, ref output1, ref input1, false);
+			CreateCreditAndSpend(keystore, scriptMulti.GetHashOrSetNew().ScriptPubKey, ref output1, ref input1, false);
 			CheckWithFlag(output1, input1, 0, true);
 			CheckWithFlag(output1, input1, ScriptVerify.P2SH, false);
-			CreateCreditAndSpend(keystore2, scriptMulti.Hash.ScriptPubKey, ref output2, ref input2, false);
+			CreateCreditAndSpend(keystore2, scriptMulti.GetHashOrSetNew().ScriptPubKey, ref output2, ref input2, false);
 			CheckWithFlag(output2, input2, 0, true);
 			CheckWithFlag(output2, input2, ScriptVerify.P2SH, false);
 			Assert.True(output1.ToBytes().SequenceEqual(output2.ToBytes()));
@@ -4154,10 +4154,10 @@ namespace NBitcoin.Tests
 			CheckWithFlag(output1, input1, ScriptVerify.Standard, true);
 
 			// P2SH witness 2-of-2 multisig
-			CreateCreditAndSpend(keystore, GetScriptForWitness(scriptMulti).Hash.ScriptPubKey, ref output1, ref input1, false);
+			CreateCreditAndSpend(keystore, GetScriptForWitness(scriptMulti).GetHashOrSetNew().ScriptPubKey, ref output1, ref input1, false);
 			CheckWithFlag(output1, input1, ScriptVerify.P2SH, true);
 			CheckWithFlag(output1, input1, ScriptVerify.P2SH | ScriptVerify.Witness, false);
-			CreateCreditAndSpend(keystore2, GetScriptForWitness(scriptMulti).Hash.ScriptPubKey, ref output2, ref input2, false);
+			CreateCreditAndSpend(keystore2, GetScriptForWitness(scriptMulti).GetHashOrSetNew().ScriptPubKey, ref output2, ref input2, false);
 			CheckWithFlag(output2, input2, ScriptVerify.P2SH, true);
 			CheckWithFlag(output2, input2, ScriptVerify.P2SH | ScriptVerify.Witness, false);
 			Assert.True(output1.ToBytes().SequenceEqual(output2.ToBytes()));
@@ -4176,7 +4176,7 @@ namespace NBitcoin.Tests
 			if (pkh != null)
 				return new Script(OpcodeType.OP_0, Op.GetPushOp(pkh.ToBytes()));
 
-			return new Script(OpcodeType.OP_0, Op.GetPushOp(scriptPubKey.WitHash.ToBytes()));
+			return new Script(OpcodeType.OP_0, Op.GetPushOp(scriptPubKey.GetWitHashOrSetNew().ToBytes()));
 		}
 
 		private byte[] ParseHex(string data)

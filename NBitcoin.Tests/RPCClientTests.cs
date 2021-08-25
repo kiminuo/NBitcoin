@@ -1921,7 +1921,7 @@ namespace NBitcoin.Tests
 				var pubkeys = new List<PubKey> { david.PubKey };
 				pubkeys.AddRange(addrInfos.Select(i => i.PubKey).ToArray());
 				var script = PayToMultiSigTemplate.Instance.GenerateScriptPubKey(4, pubkeys.ToArray());
-				var aMultiP2SH = script.Hash.ScriptPubKey;
+				var aMultiP2SH = script.GetHashOrSetNew().ScriptPubKey;
 				// var aMultiP2WSH = script.WitHash.ScriptPubKey;
 				// var aMultiP2SH_P2WSH = script.WitHash.ScriptPubKey.Hash.ScriptPubKey;
 				var multiAddresses = new BitcoinAddress[] { aMultiP2SH.GetDestinationAddress(builder.Network) };
@@ -2035,16 +2035,16 @@ namespace NBitcoin.Tests
 				var addrP2SHSegwit = client.GetNewAddress(new GetNewAddressRequest() { AddressType = AddressType.P2SHSegwit });
 				var pubkeys = new PubKey[] { new Key().PubKey, new Key().PubKey, new Key().PubKey };
 				var redeem = PayToMultiSigTemplate.Instance.GenerateScriptPubKey(2, pubkeys);
-				client.ImportAddress(redeem.Hash);
-				client.ImportAddress(redeem.WitHash);
-				client.ImportAddress(redeem.WitHash.ScriptPubKey.Hash);
+				client.ImportAddress(redeem.GetHashOrSetNew());
+				client.ImportAddress(redeem.GetWitHashOrSetNew());
+				client.ImportAddress(redeem.GetWitHashOrSetNew().ScriptPubKey.GetHashOrSetNew());
 
 				Assert.NotNull(client.GetAddressInfo(addrLegacy));
 				Assert.NotNull(client.GetAddressInfo(addrBech32));
 				Assert.NotNull(client.GetAddressInfo(addrP2SHSegwit));
-				Assert.NotNull(client.GetAddressInfo(redeem.Hash));
-				Assert.NotNull(client.GetAddressInfo(redeem.WitHash));
-				Assert.NotNull(client.GetAddressInfo(redeem.WitHash.ScriptPubKey.Hash));
+				Assert.NotNull(client.GetAddressInfo(redeem.GetHashOrSetNew()));
+				Assert.NotNull(client.GetAddressInfo(redeem.GetWitHashOrSetNew()));
+				Assert.NotNull(client.GetAddressInfo(redeem.GetWitHashOrSetNew().ScriptPubKey.GetHashOrSetNew()));
 			}
 		}
 

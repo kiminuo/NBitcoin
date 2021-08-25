@@ -260,7 +260,7 @@ namespace NBitcoin.Tests
 				rpc.SendRawTransaction(signed);
 
 				// Let's try P2SH with 2 coins
-				aliceAddress = alice.PubKey.ScriptPubKey.Hash.GetAddress(builder.Network);
+				aliceAddress = alice.PubKey.ScriptPubKey.GetHashOrSetNew().GetAddress(builder.Network);
 				txid = rpc.SendToAddress(aliceAddress, Money.Coins(1.0m));
 				tx = rpc.GetRawTransaction(txid);
 				coin = tx.Outputs.AsCoins().First(c => c.ScriptPubKey == aliceAddress.ScriptPubKey);
@@ -313,7 +313,7 @@ namespace NBitcoin.Tests
 				Assert.True(isValid);
 
 				// Test p2sh
-				address = new Key().PubKey.ScriptPubKey.Hash.ScriptPubKey.GetDestinationAddress(builder.Network);
+				address = new Key().PubKey.ScriptPubKey.GetHashOrSetNew().ScriptPubKey.GetDestinationAddress(builder.Network);
 				isValid = ((JObject)node.CreateRPCClient().SendCommand("validateaddress", address.ToString()).Result)["isvalid"].Value<bool>();
 				Assert.True(isValid);
 			}

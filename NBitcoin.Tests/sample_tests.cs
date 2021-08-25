@@ -211,7 +211,7 @@ namespace NBitcoin.Tests
 									  (
 										Keys: _.Keys,
 										Redeem: _.Redeem,
-										Address: _.Redeem.WitHash.ScriptPubKey.Hash.ScriptPubKey.GetDestinationAddress(nodeBuilder.Network)
+										Address: _.Redeem.GetWitHashOrSetNew().ScriptPubKey.GetHashOrSetNew().ScriptPubKey.GetDestinationAddress(nodeBuilder.Network)
 									  ));
 
 
@@ -262,7 +262,7 @@ namespace NBitcoin.Tests
 				var masterKeys = Enumerable.Range(0, 3).Select(_ => new ExtKey()).ToArray();
 				var keys = masterKeys.Select(mk => mk.Derive(0, false).PrivateKey).ToArray();
 				var redeem = PayToMultiSigTemplate.Instance.GenerateScriptPubKey(keys.Length, keys.Select(k => k.PubKey).ToArray());
-				var address = redeem.WitHash.ScriptPubKey.Hash.ScriptPubKey.GetDestinationAddress(nodeBuilder.Network);
+				var address = redeem.GetWitHashOrSetNew().ScriptPubKey.GetHashOrSetNew().ScriptPubKey.GetDestinationAddress(nodeBuilder.Network);
 
 				var id = rpc.SendToAddress(address, Money.Coins(1));
 				var tx = rpc.GetRawTransaction(id);

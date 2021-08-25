@@ -31,12 +31,12 @@ namespace NBitcoin.Tests
 			CanSerializeInJsonCore(new AssetId(k.PubKey));
 			CanSerializeInJsonCore(k.PubKey.ScriptPubKey);
 			CanSerializeInJsonCore(new Key().PubKey.WitHash.GetAddress(Network.Main), Network.Main);
-			CanSerializeInJsonCore(new Key().PubKey.WitHash.ScriptPubKey.WitHash.GetAddress(Network.Main), Network.Main);
+			CanSerializeInJsonCore(new Key().PubKey.WitHash.ScriptPubKey.GetWitHashOrSetNew().GetAddress(Network.Main), Network.Main);
 			var sig = k.Sign(new uint256(RandomUtils.GetBytes(32)));
 			CanSerializeInJsonCore(sig);
 			CanSerializeInJsonCore(new TransactionSignature(sig, SigHash.All));
 			CanSerializeInJsonCore(k.PubKey.Hash);
-			CanSerializeInJsonCore(k.PubKey.ScriptPubKey.Hash);
+			CanSerializeInJsonCore(k.PubKey.ScriptPubKey.GetHashOrSetNew());
 			CanSerializeInJsonCore(k.PubKey.WitHash);
 			CanSerializeInJsonCore(k);
 			CanSerializeInJsonCore(k.PubKey);

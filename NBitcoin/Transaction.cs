@@ -1330,7 +1330,7 @@ namespace NBitcoin
 				return pubKey.PublicKey.WitHash;
 			}
 			var p2sh = PayToWitScriptHashTemplate.Instance.ExtractWitScriptParameters(this);
-			return p2sh != null ? p2sh.WitHash : null;
+			return p2sh != null ? p2sh.GetWitHashOrSetNew() : null;
 		}
 	}
 

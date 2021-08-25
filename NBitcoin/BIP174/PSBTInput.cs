@@ -313,7 +313,7 @@ namespace NBitcoin
 				{
 					witness_script = scriptCoin.Redeem;
 					if (scriptCoin.IsP2SH)
-						redeem_script = witness_script.WitHash.ScriptPubKey;
+						redeem_script = witness_script.GetWitHashOrSetNew().ScriptPubKey;
 				}
 			}
 			else
@@ -591,7 +591,7 @@ namespace NBitcoin
 				}
 				if (redeem_script != null && validOutpoint)
 				{
-					if (redeem_script.Hash.ScriptPubKey != NonWitnessUtxo.Outputs[TxIn.PrevOut.N].ScriptPubKey)
+					if (redeem_script.GetHashOrSetNew().ScriptPubKey != NonWitnessUtxo.Outputs[TxIn.PrevOut.N].ScriptPubKey)
 						errors.Add(new PSBTError(Index, "The redeem_script is not coherent with the scriptPubKey of the non_witness_utxo"));
 				}
 			}
@@ -600,11 +600,11 @@ namespace NBitcoin
 			{
 				if (redeem_script != null)
 				{
-					if (redeem_script.Hash.ScriptPubKey != witness_utxo.ScriptPubKey)
+					if (redeem_script.GetHashOrSetNew().ScriptPubKey != witness_utxo.ScriptPubKey)
 						errors.Add(new PSBTError(Index, "The redeem_script is not coherent with the scriptPubKey of the witness_utxo"));
 					if (witness_script != null &&
 						redeem_script != null &&
-						PayToWitScriptHashTemplate.Instance.ExtractScriptPubKeyParameters(redeem_script) != witness_script.WitHash)
+						PayToWitScriptHashTemplate.Instance.ExtractScriptPubKeyParameters(redeem_script) != witness_script.GetWitHashOrSetNew())
 						errors.Add(new PSBTError(Index, "witnessScript with witness UTXO does not match the redeemScript"));
 				}
 			}

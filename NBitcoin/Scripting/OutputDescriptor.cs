@@ -259,8 +259,8 @@ namespace NBitcoin.Scripting
 					repo.Merge(subRepo1);
 					foreach (var inner in shInnerResult)
 					{
-						repo.SetScript(inner.Hash, inner);
-						outputScripts.Add(inner.Hash.ScriptPubKey);
+						repo.SetScript(inner.GetHashOrSetNew(), inner);
+						outputScripts.Add(inner.GetHashOrSetNew().ScriptPubKey);
 					}
 					return true;
 				case WSH self:
@@ -270,9 +270,9 @@ namespace NBitcoin.Scripting
 					repo.Merge(subRepo2);
 					foreach (var inner in wshInnerResult)
 					{
-						repo.SetScript(inner.Hash, inner);
-						repo.SetScript(inner.WitHash.HashForLookUp, inner);
-						outputScripts.Add(inner.WitHash.ScriptPubKey);
+						repo.SetScript(inner.GetHashOrSetNew(), inner);
+						repo.SetScript(inner.GetWitHashOrSetNew().HashForLookUp, inner);
+						outputScripts.Add(inner.GetWitHashOrSetNew().ScriptPubKey);
 					}
 					return true;
 			}
@@ -302,8 +302,8 @@ namespace NBitcoin.Scripting
 					if (key.IsCompressed)
 					{
 						res.Add(key.WitHash.ScriptPubKey);
-						res.Add(key.WitHash.ScriptPubKey.Hash.ScriptPubKey);
-						repo.SetScript(key.WitHash.ScriptPubKey.Hash, key.WitHash.ScriptPubKey);
+						res.Add(key.WitHash.ScriptPubKey.GetHashOrSetNew().ScriptPubKey);
+						repo.SetScript(key.WitHash.ScriptPubKey.GetHashOrSetNew(), key.WitHash.ScriptPubKey);
 					}
 					return res;
 				// Other cases never calls this function. Because this method is just a helper for expanding above cases

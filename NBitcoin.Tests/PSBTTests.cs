@@ -343,7 +343,7 @@ namespace NBitcoin.Tests
 			builder.AddCoins(c1);
 			builder.SendEstimatedFees(new FeeRate(1.0m));
 			builder.Send(BitcoinAddress.Create("bc1qeef3jecqytj8j2xnjzduf5mu9c6jsqwd4hmvyv2zw8hzpf7a47nqrws5sn", Network.Main), Money.Coins(0.2m));
-			builder.SetChange(changeRedeem.WitHash.ScriptPubKey);
+			builder.SetChange(changeRedeem.GetWitHashOrSetNew().ScriptPubKey);
 			var psbt = builder.BuildPSBT(false);
 			psbt.AddScripts(changeRedeem);
 			foreach (var k in accountKeys)
@@ -359,7 +359,7 @@ namespace NBitcoin.Tests
 		private ScriptCoin CreateCoin(Script redeem)
 		{
 			var outpoint = new OutPoint(uint256.Zero, i++);
-			var txout = new TxOut(Money.Coins(1.0m), redeem.WitHash.ScriptPubKey);
+			var txout = new TxOut(Money.Coins(1.0m), redeem.GetWitHashOrSetNew().ScriptPubKey);
 			return new ScriptCoin(outpoint, txout, redeem);
 		}
 
@@ -756,7 +756,7 @@ namespace NBitcoin.Tests
 				tx.Inputs[3].WitScript = PayToWitScriptHashTemplate.Instance.GenerateWitScript(emptySigPush, redeem);
 				tx.Inputs[4].ScriptSig = new Script(Op.GetPushOp(keys[0].PubKey.WitHash.ScriptPubKey.ToBytes()));
 				tx.Inputs[4].WitScript = PayToWitPubKeyHashTemplate.Instance.GenerateWitScript(null, keys[0].PubKey);
-				tx.Inputs[5].ScriptSig = new Script(Op.GetPushOp(redeem.WitHash.ScriptPubKey.ToBytes()));
+				tx.Inputs[5].ScriptSig = new Script(Op.GetPushOp(redeem.GetWitHashOrSetNew().ScriptPubKey.ToBytes()));
 				tx.Inputs[5].WitScript = PayToWitScriptHashTemplate.Instance.GenerateWitScript(emptySigPush, redeem);
 			}
 
@@ -778,22 +778,22 @@ namespace NBitcoin.Tests
 			// 2. p2sh-multisig
 			var tx2 = network.CreateTransaction();
 			tx2.Inputs.Add(TxIn.CreateCoinbase(200));
-			tx2.Outputs.Add(new TxOut(Money.Coins(0.1m), redeem.Hash));
+			tx2.Outputs.Add(new TxOut(Money.Coins(0.1m), redeem.GetHashOrSetNew()));
 
 			// 3. p2wsh
 			var tx3 = network.CreateTransaction();
 			tx3.Inputs.Add(TxIn.CreateCoinbase(200));
-			tx3.Outputs.Add(new TxOut(Money.Coins(0.1m), redeem.WitHash));
+			tx3.Outputs.Add(new TxOut(Money.Coins(0.1m), redeem.GetWitHashOrSetNew()));
 
 			// 4. p2sh-p2wpkh
 			var tx4 = network.CreateTransaction();
 			tx4.Inputs.Add(TxIn.CreateCoinbase(200));
-			tx4.Outputs.Add(new TxOut(Money.Coins(0.1m), keyForOutput[0].PubKey.WitHash.ScriptPubKey.Hash));
+			tx4.Outputs.Add(new TxOut(Money.Coins(0.1m), keyForOutput[0].PubKey.WitHash.ScriptPubKey.GetHashOrSetNew()));
 
 			// 5. p2sh-p2wsh
 			var tx5 = network.CreateTransaction();
 			tx5.Inputs.Add(TxIn.CreateCoinbase(200));
-			tx5.Outputs.Add(new TxOut(Money.Coins(0.1m), redeem.WitHash.ScriptPubKey.Hash.ScriptPubKey));
+			tx5.Outputs.Add(new TxOut(Money.Coins(0.1m), redeem.GetWitHashOrSetNew().ScriptPubKey.GetHashOrSetNew().ScriptPubKey));
 			return new Transaction[] { tx1, tx2, tx3, tx4, tx5 };
 		}
 

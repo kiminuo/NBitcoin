@@ -99,7 +99,7 @@ namespace NBitcoin.Tests.Generators
 			select t.WitHash.ScriptPubKey;
 		public static Gen<Script> P2WSHScriptPubKey() =>
 			from w in MultiSignatureScriptSig()
-			select w.WitHash.ScriptPubKey;
+			select w.GetWitHashOrSetNew().ScriptPubKey;
 
 		public static Gen<Script> WitnessScriptPubKey() =>
 			Gen.OneOf(P2WSHScriptPubKey(), P2WPKHScriptPubKey());

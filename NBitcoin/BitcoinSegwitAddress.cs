@@ -160,7 +160,7 @@ namespace NBitcoin
 		public bool VerifyMessage(string message, string signature)
 		{
 			var key = PubKey.RecoverFromMessage(message, signature);
-			return key.WitHash.ScriptPubKey.WitHash == Hash;
+			return key.WitHash.ScriptPubKey.GetWitHashOrSetNew() == Hash;
 		}
 
 		WitScriptId _Hash;

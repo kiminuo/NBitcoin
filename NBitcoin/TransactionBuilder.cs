@@ -2597,9 +2597,9 @@ namespace NBitcoin
 		{
 			foreach (var redeem in knownRedeems)
 			{
-				_ScriptPubKeyToRedeem.AddOrReplace(redeem.WitHash.ScriptPubKey.Hash.ScriptPubKey, redeem); //Might be P2SH(PWSH)
-				_ScriptPubKeyToRedeem.AddOrReplace(redeem.Hash.ScriptPubKey, redeem); //Might be P2SH
-				_ScriptPubKeyToRedeem.AddOrReplace(redeem.WitHash.ScriptPubKey, redeem); //Might be PWSH
+				_ScriptPubKeyToRedeem.AddOrReplace(redeem.GetWitHashOrSetNew().ScriptPubKey.GetHashOrSetNew().ScriptPubKey, redeem); //Might be P2SH(PWSH)
+				_ScriptPubKeyToRedeem.AddOrReplace(redeem.GetHashOrSetNew().ScriptPubKey, redeem); //Might be P2SH
+				_ScriptPubKeyToRedeem.AddOrReplace(redeem.GetWitHashOrSetNew().ScriptPubKey, redeem); //Might be PWSH
 			}
 			return this;
 		}
@@ -2673,7 +2673,7 @@ namespace NBitcoin
 			var p2sh = PayToScriptHashTemplate.Instance.ExtractScriptSigParameters(scriptSig);
 			if (p2sh != null && p2sh.RedeemScript != null)
 			{
-				return p2sh.RedeemScript.Hash.ScriptPubKey;
+				return p2sh.RedeemScript.GetHashOrSetNew().ScriptPubKey;
 			}
 			foreach (var extension in Extensions)
 			{

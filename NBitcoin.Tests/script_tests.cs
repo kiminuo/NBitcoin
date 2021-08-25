@@ -829,7 +829,7 @@ namespace NBitcoin.Tests
 
 			// P2SH, single-signature case:
 			Script pkSingle = PayToPubkeyTemplate.Instance.GenerateScriptPubKey(keys[0].PubKey);
-			scriptPubKey = pkSingle.Hash.ScriptPubKey;
+			scriptPubKey = pkSingle.GetHashOrSetNew().ScriptPubKey;
 			txFrom.Outputs[0].ScriptPubKey = scriptPubKey;
 			txTo.Inputs[0].PrevOut = new OutPoint(txFrom, 0);
 
@@ -1089,7 +1089,7 @@ namespace NBitcoin.Tests
 			Assert.Equal(expected, actual);
 			var extract = PayToWitScriptHashTemplate.Instance.ExtractWitScriptParameters(actual, null);
 			Assert.Equal(extract, redeem);
-			extract = PayToWitScriptHashTemplate.Instance.ExtractWitScriptParameters(actual, new Key().PubKey.ScriptPubKey.WitHash);
+			extract = PayToWitScriptHashTemplate.Instance.ExtractWitScriptParameters(actual, new Key().PubKey.ScriptPubKey.GetWitHashOrSetNew());
 			Assert.Null(extract);
 		}
 
@@ -1196,7 +1196,7 @@ namespace NBitcoin.Tests
 			Assert.Equal(scriptSig, PayToScriptHashTemplate.Instance.GenerateScriptSig(sigParams).ToString());
 
 			//If scriptPubKey is provided, is it verifying the provided scriptSig is coherent with it ?
-			sigParams = PayToScriptHashTemplate.Instance.ExtractScriptSigParameters(new Script(scriptSig), sigParams.RedeemScript.PaymentScript);
+			sigParams = PayToScriptHashTemplate.Instance.ExtractScriptSigParameters(new Script(scriptSig), sigParams.RedeemScript.GetPaymentScriptOrSetNew());
 			Assert.NotNull(sigParams);
 			sigParams = PayToScriptHashTemplate.Instance.ExtractScriptSigParameters(new Script(scriptSig), new Script("OP_HASH160 b5b88dd9befc9236915fcdbb7fd50052df50c853 OP_EQUAL"));
 			Assert.Null(sigParams);

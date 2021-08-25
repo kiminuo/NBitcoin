@@ -70,11 +70,11 @@ namespace NBitcoin.Tests
 				if (type == CoinType.P2WPKH)
 					return new Coin(new uint256(RandomUtils.GetBytes(32)), 0, amount, bob.PubKey.WitHash.ScriptPubKey);
 				if (type == CoinType.P2SH)
-					return new Coin(new uint256(RandomUtils.GetBytes(32)), 0, amount, bob.PubKey.ScriptPubKey.Hash.ScriptPubKey).ToScriptCoin(bob.PubKey.ScriptPubKey);
+					return new Coin(new uint256(RandomUtils.GetBytes(32)), 0, amount, bob.PubKey.ScriptPubKey.GetHashOrSetNew().ScriptPubKey).ToScriptCoin(bob.PubKey.ScriptPubKey);
 				if (type == CoinType.SegwitP2SH)
-					return new Coin(new uint256(RandomUtils.GetBytes(32)), 0, amount, bob.PubKey.ScriptPubKey.WitHash.ScriptPubKey.Hash.ScriptPubKey).ToScriptCoin(bob.PubKey.ScriptPubKey);
+					return new Coin(new uint256(RandomUtils.GetBytes(32)), 0, amount, bob.PubKey.ScriptPubKey.GetWitHashOrSetNew().ScriptPubKey.GetHashOrSetNew().ScriptPubKey).ToScriptCoin(bob.PubKey.ScriptPubKey);
 				if (type == CoinType.Segwit)
-					return new Coin(new uint256(RandomUtils.GetBytes(32)), 0, amount, bob.PubKey.ScriptPubKey.WitHash.ScriptPubKey).ToScriptCoin(bob.PubKey.ScriptPubKey);
+					return new Coin(new uint256(RandomUtils.GetBytes(32)), 0, amount, bob.PubKey.ScriptPubKey.GetWitHashOrSetNew().ScriptPubKey).ToScriptCoin(bob.PubKey.ScriptPubKey);
 				throw new NotSupportedException();
 			}
 			else
@@ -85,11 +85,11 @@ namespace NBitcoin.Tests
 				}
 				var script = PayToMultiSigTemplate.Instance.GenerateScriptPubKey((int)(1 + (RandomUtils.GetUInt32() % bobs.Length)), bobs.Select(b => b.PubKey).ToArray());
 				if (type == CoinType.P2SH)
-					return new Coin(new uint256(RandomUtils.GetBytes(32)), 0, amount, script.Hash.ScriptPubKey).ToScriptCoin(script);
+					return new Coin(new uint256(RandomUtils.GetBytes(32)), 0, amount, script.GetHashOrSetNew().ScriptPubKey).ToScriptCoin(script);
 				if (type == CoinType.SegwitP2SH)
-					return new Coin(new uint256(RandomUtils.GetBytes(32)), 0, amount, script.WitHash.ScriptPubKey.Hash.ScriptPubKey).ToScriptCoin(script);
+					return new Coin(new uint256(RandomUtils.GetBytes(32)), 0, amount, script.GetWitHashOrSetNew().ScriptPubKey.GetHashOrSetNew().ScriptPubKey).ToScriptCoin(script);
 				if (type == CoinType.Segwit)
-					return new Coin(new uint256(RandomUtils.GetBytes(32)), 0, amount, script.WitHash.ScriptPubKey).ToScriptCoin(script);
+					return new Coin(new uint256(RandomUtils.GetBytes(32)), 0, amount, script.GetWitHashOrSetNew().ScriptPubKey).ToScriptCoin(script);
 				throw new NotSupportedException();
 			}
 		}

@@ -369,7 +369,7 @@ namespace NBitcoin
 		}
 		public Script GenerateScriptPubKey(Script scriptPubKey)
 		{
-			return GenerateScriptPubKey(scriptPubKey.Hash);
+			return GenerateScriptPubKey(scriptPubKey.GetHashOrSetNew());
 		}
 
 		protected override bool FastCheckScriptPubKey(Script scriptPubKey, out bool needMoreCheck)
@@ -456,7 +456,7 @@ namespace NBitcoin
 				var expectedHash = ExtractScriptPubKeyParameters(scriptPubKey);
 				if (expectedHash == null)
 					return false;
-				if (expectedHash != Script.FromBytesUnsafe(ops[ops.Length - 1].PushData).Hash)
+				if (expectedHash != Script.FromBytesUnsafe(ops[ops.Length - 1].PushData).GetHashOrSetNew())
 					return false;
 			}
 
@@ -938,7 +938,7 @@ namespace NBitcoin
 			Script redeem = new Script(last);
 			if (expectedScriptId != null)
 			{
-				if (expectedScriptId != redeem.WitHash)
+				if (expectedScriptId != redeem.GetWitHashOrSetNew())
 					return null;
 			}
 			return redeem;
@@ -974,7 +974,7 @@ namespace NBitcoin
 				throw new ArgumentNullException(nameof(witnessRedeemScript));
 			if (Version == OpcodeType.OP_0 && Program?.Length is 32)
 			{
-				return witnessRedeemScript.WitHash == new WitScriptId(Program);
+				return witnessRedeemScript.GetWitHashOrSetNew() == new WitScriptId(Program);
 			}
 			return false;
 		}

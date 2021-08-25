@@ -37,7 +37,7 @@ namespace NBitcoin.Scripting
 					}
 					if (r.Value is Script scV)
 					{
-						repo.SetScript(scV.Hash, scV);
+						repo.SetScript(scV.GetHashOrSetNew(), scV);
 					}
 					if (r.Value is Origin pkpV)
 					{

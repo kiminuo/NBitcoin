@@ -34,7 +34,7 @@ namespace NBitcoin.OpenAsset
 		}
 
 		public AssetId(Script assetScriptPubKey)
-			: this(assetScriptPubKey.Hash)
+			: this(assetScriptPubKey.GetHashOrSetNew())
 		{
 			if (assetScriptPubKey == null)
 				throw new ArgumentNullException(nameof(assetScriptPubKey));

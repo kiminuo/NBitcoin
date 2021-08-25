@@ -246,7 +246,7 @@ namespace NBitcoin
 				{
 					witness_script = scriptCoin.Redeem;
 					if (scriptCoin.IsP2SH)
-						redeem_script = witness_script.WitHash.ScriptPubKey;
+						redeem_script = witness_script.GetWitHashOrSetNew().ScriptPubKey;
 				}
 			}
 		}

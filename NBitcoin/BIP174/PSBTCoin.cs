@@ -101,7 +101,7 @@ namespace NBitcoin
 				var output = GetCoin();
 				if (output != null)
 				{
-					if (pubKey.WitHash.ScriptPubKey.Hash.ScriptPubKey == output.ScriptPubKey)
+					if (pubKey.WitHash.ScriptPubKey.GetHashOrSetNew().ScriptPubKey == output.ScriptPubKey)
 					{
 						redeem_script = pubKey.WitHash.ScriptPubKey;
 					}
@@ -132,7 +132,7 @@ namespace NBitcoin
 					return null;
 				}
 
-				if (redeemScript.Hash != scriptId)
+				if (redeemScript.GetHashOrSetNew() != scriptId)
 				{
 					error = "Spending p2sh output but redeem_script is not matching the utxo scriptPubKey";
 					return null;

@@ -594,12 +594,9 @@ namespace NBitcoin
 		/// <summary>
 		/// Get the P2SH scriptPubKey of this script
 		/// </summary>
-		public Script PaymentScript
+		public Script GetPaymentScriptOrSetNew()
 		{
-			get
-			{
-				return _PaymentScript ?? (_PaymentScript = PayToScriptHashTemplate.Instance.GenerateScriptPubKey(Hash));
-			}
+			return _PaymentScript ?? (_PaymentScript = PayToScriptHashTemplate.Instance.GenerateScriptPubKey(GetHashOrSetNew()));
 		}
 
 		public override string ToString()
@@ -702,20 +699,16 @@ namespace NBitcoin
 		}
 
 		ScriptId _Hash;
-		public ScriptId Hash
+
+		public ScriptId GetHashOrSetNew()
 		{
-			get
-			{
-				return _Hash ?? (_Hash = new ScriptId(this));
-			}
+			return _Hash ?? (_Hash = new ScriptId(this));
 		}
 		WitScriptId _WitHash;
-		public WitScriptId WitHash
+
+		public WitScriptId GetWitHashOrSetNew()
 		{
-			get
-			{
-				return _WitHash ?? (_WitHash = new WitScriptId(this));
-			}
+			return _WitHash ?? (_WitHash = new WitScriptId(this));
 		}
 
 		public uint GetSigOpCount(Script scriptSig)
@@ -790,7 +783,7 @@ namespace NBitcoin
 				return pubKey.PublicKey.Hash;
 			}
 			var p2sh = PayToScriptHashTemplate.Instance.ExtractScriptSigParameters(this);
-			return p2sh != null ? p2sh.RedeemScript.Hash : null;
+			return p2sh != null ? p2sh.RedeemScript.GetHashOrSetNew() : null;
 		}
 
 		/// <summary>

@@ -228,7 +228,7 @@ namespace NBitcoin.Tests
 			Assert.Throws<FormatException>(() => BitcoinAddress.Create("tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx", Network.Main));
 
 			var addressScript = (BitcoinWitScriptAddress)BitcoinAddress.Create("bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3", Network.Main);
-			Assert.Equal(pubkey.ScriptPubKey.WitHash.ScriptPubKey.ToHex(), addressScript.ScriptPubKey.ToHex());
+			Assert.Equal(pubkey.ScriptPubKey.GetWitHashOrSetNew().ScriptPubKey.ToHex(), addressScript.ScriptPubKey.ToHex());
 			Assert.Equal("bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3", addressScript.Hash.GetAddress(addressScript.Network).ToString());
 			Assert.Equal("bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3", addressScript.ScriptPubKey.GetDestinationAddress(addressScript.Network).ToString());
 
@@ -973,7 +973,7 @@ namespace NBitcoin.Tests
 			Assert.Equal("0359d3092e4a8d5f3b3948235b5dec7395259273ccf3c4e9d5e16695a3fc9588d6 OP_CHECKSIG", pubKey.ScriptPubKey.ToString());
 
 			Script script = new Script("0359d3092e4a8d5f3b3948235b5dec7395259273ccf3c4e9d5e16695a3fc9588d6 OP_CHECKSIG");
-			Assert.Equal("OP_HASH160 a216e3bce8c1b3adf376731b6cd0b6936c4e053f OP_EQUAL", script.PaymentScript.ToString());
+			Assert.Equal("OP_HASH160 a216e3bce8c1b3adf376731b6cd0b6936c4e053f OP_EQUAL", script.GetPaymentScriptOrSetNew().ToString());
 		}
 
 		public class DummyClass

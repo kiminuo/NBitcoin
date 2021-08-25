@@ -70,7 +70,7 @@ namespace NBitcoin
 		{
 			get
 			{
-				return Bearer.TxOut.ScriptPubKey.Hash.ToAssetId();
+				return Bearer.TxOut.ScriptPubKey.GetHashOrSetNew().ToAssetId();
 			}
 		}
 
@@ -663,7 +663,7 @@ namespace NBitcoin
 			if (!IsP2SH)
 				return null;
 			var p2shRedeem = RedeemType == RedeemType.P2SH ? Redeem :
-							RedeemType == RedeemType.WitnessV0 ? Redeem.WitHash.ScriptPubKey :
+							RedeemType == RedeemType.WitnessV0 ? Redeem.GetWitHashOrSetNew().ScriptPubKey :
 							null;
 			if (p2shRedeem == null)
 				throw new NotSupportedException("RedeemType not supported for getting the P2SH script, contact the library author");
@@ -675,7 +675,7 @@ namespace NBitcoin
 			get
 			{
 				return
-					Redeem.Hash.ScriptPubKey == TxOut.ScriptPubKey ?
+					Redeem.GetHashOrSetNew().ScriptPubKey == TxOut.ScriptPubKey ?
 					RedeemType.P2SH :
 					RedeemType.WitnessV0;
 			}
@@ -702,9 +702,9 @@ namespace NBitcoin
 					return false;
 				}
 
-				if (expectedDestination.ScriptPubKey != redeem.Hash.ScriptPubKey)
+				if (expectedDestination.ScriptPubKey != redeem.GetHashOrSetNew().ScriptPubKey)
 				{
-					if (redeem.WitHash.ScriptPubKey.Hash.ScriptPubKey != expectedDestination.ScriptPubKey)
+					if (redeem.GetWitHashOrSetNew().ScriptPubKey.GetHashOrSetNew().ScriptPubKey != expectedDestination.ScriptPubKey)
 					{
 						error = "The redeem provided does not match the scriptPubKey of the coin";
 						return false;
@@ -713,7 +713,7 @@ namespace NBitcoin
 			}
 			else if (expectedDestination is WitScriptId)
 			{
-				if (expectedDestination.ScriptPubKey != redeem.WitHash.ScriptPubKey)
+				if (expectedDestination.ScriptPubKey != redeem.GetWitHashOrSetNew().ScriptPubKey)
 				{
 					error = "The redeem provided does not match the scriptPubKey of the coin";
 					return false;

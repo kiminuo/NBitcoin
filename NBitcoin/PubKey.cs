@@ -299,7 +299,7 @@ namespace NBitcoin
 				case ScriptPubKeyType.SegwitP2SH:
 					if (!network.Consensus.SupportSegwit)
 						throw new NotSupportedException("This network does not support segwit");
-					return this.WitHash.ScriptPubKey.Hash.GetAddress(network);
+					return this.WitHash.ScriptPubKey.GetHashOrSetNew().GetAddress(network);
 #pragma warning disable CS0618 // Type or member is obsolete
 				case ScriptPubKeyType.TaprootBIP86:
 #pragma warning restore CS0618 // Type or member is obsolete
@@ -383,7 +383,7 @@ namespace NBitcoin
 				case ScriptPubKeyType.Segwit:
 					return WitHash;
 				case ScriptPubKeyType.SegwitP2SH:
-					return WitHash.ScriptPubKey.Hash;
+					return WitHash.ScriptPubKey.GetHashOrSetNew();
 #pragma warning disable CS0618 // Type or member is obsolete
 				case ScriptPubKeyType.TaprootBIP86:
 #pragma warning restore CS0618 // Type or member is obsolete

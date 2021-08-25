@@ -59,8 +59,8 @@ namespace NBitcoin.Tests.Generators
 			from isP2WSH in PrimitiveGenerator.Bool()
 			from isP2SH in PrimitiveGenerator.Bool()
 			where isP2WSH || isP2SH
-			let redeem = (isP2SH && isP2WSH) ? sc.WitHash.ScriptPubKey : sc
-			let scriptPubKey = isP2SH ? redeem.Hash.ScriptPubKey : redeem.WitHash.ScriptPubKey
+			let redeem = (isP2SH && isP2WSH) ? sc.GetWitHashOrSetNew().ScriptPubKey : sc
+			let scriptPubKey = isP2SH ? redeem.GetHashOrSetNew().ScriptPubKey : redeem.GetWitHashOrSetNew().ScriptPubKey
 			select new TxOut(money, scriptPubKey);
 
 		private static Gen<Transaction> TXFromOutput(TxOut txout, Network network, int vout) =>

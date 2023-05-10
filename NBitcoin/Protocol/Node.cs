@@ -1183,7 +1183,11 @@ namespace NBitcoin.Protocol
 		public void DisconnectAsync(string reason, Exception exception = null)
 		{
 			if (!IsConnected)
+			{
+				_Connection.Cancel.Cancel();
 				return;
+			}
+
 			if (Interlocked.CompareExchange(ref _Disconnecting, 1, 0) == 1)
 				return;
 

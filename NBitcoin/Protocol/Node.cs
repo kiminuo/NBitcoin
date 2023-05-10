@@ -15,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NBitcoin.Logging;
+using Newtonsoft.Json.Linq;
 
 namespace NBitcoin.Protocol
 {
@@ -221,7 +222,7 @@ namespace NBitcoin.Protocol
 							}
 							if (IsVerbose)
 							{
-								Logs.NodeServer.LogTrace("Sending message {message}", message);
+								Logs.NodeServer.LogInformation("Sending message {message}", message);
 							}
 							var addrV2Support = Node.PreferAddressV2
 									? NetworkAddress.AddrV2Format
@@ -237,9 +238,15 @@ namespace NBitcoin.Protocol
 							evt.SetBuffer(bytes, 0, bytes.Length);
 							_Node.Counter.AddWritten(bytes.Length);
 							ar.Reset();
+
+							Logs.NodeServer.LogInformation($"XXX#2: Node.BeginListen[{Node}][{Cancel.IsCancellationRequested}] About to send a message.");
 							if (!Socket.SendAsync(evt))
 								Utils.SafeSet(ar);
+
+							Logs.NodeServer.LogInformation($"XXX#3: Node.BeginListen[{Node}][{Cancel.IsCancellationRequested}] Waiting for the message to be sent.");
 							WaitHandle.WaitAny(new WaitHandle[] { ar, Cancel.Token.WaitHandle }, -1);
+							Logs.NodeServer.LogInformation($"XXX#3: Node.BeginListen[{Node}][{Cancel.IsCancellationRequested}] Waiting done.");
+
 							if (!Cancel.Token.IsCancellationRequested)
 							{
 								if (evt.SocketError != SocketError.Success)
@@ -269,12 +276,12 @@ namespace NBitcoin.Protocol
 					{
 						if (IsVerbose)
 						{
-							Logs.NodeServer.LogTrace("The connection cancelled before the message was sent");
+							Logs.NodeServer.LogTrace("Node.BeginListen: The connection cancelled before the message was sent");
 						}
 						pending.Completion.SetException(new OperationCanceledException("The peer has been disconnected"));
 					}
 					Messages = new BlockingCollection<SentMessage>(new ConcurrentQueue<SentMessage>());
-					Logs.NodeServer.LogInformation("Stop sending");
+					Logs.NodeServer.LogInformation("Node.BeginListen: Stop sending");
 					Cleanup(unhandledException);
 				}).Start();
 				new Thread(() =>
@@ -284,20 +291,23 @@ namespace NBitcoin.Protocol
 
 					using (Logs.NodeServer.BeginScope("Thread scope {ThreadId}", _ListenerThreadId))
 					{
-						Logs.NodeServer.LogInformation("Start Listening");
+						Logs.NodeServer.LogInformation("Node.BeginListen: Start Listening");
 
 						Exception unhandledException = null;
 						try
 						{
+							Logs.NodeServer.LogInformation($"Node.BeginListen: XXX#4: [{Node}][{Cancel.IsCancellationRequested}] Create stream.");
 							var stream = new NetworkStream(Socket, false);
+							Logs.NodeServer.LogInformation($"Node.BeginListen: XXX#4: [{Node}][{Cancel.IsCancellationRequested}] Stream created.");
+
 							while (!Cancel.Token.IsCancellationRequested)
 							{
 								PerformanceCounter counter;
 
+								Logs.NodeServer.LogInformation($"Node.BeginListen: XXX#5: [{Node}][{Cancel.IsCancellationRequested}] Waiting for new message. Node.Version: {Node.Version}.");
 								var message = Message.ReadNext(stream, Node.Network, Node.Version, Cancel.Token, out counter);
 
-								if (IsVerbose)
-									Logs.NodeServer.LogTrace("Receiving message: {command} ({payload})", message.Command, message.Payload);
+								Logs.NodeServer.LogInformation($"Node.BeginListen: [{Node}][{Cancel.IsCancellationRequested}] Receiving message: {message.Command} ({message.Payload})");
 
 								Node.LastSeen = DateTimeOffset.UtcNow;
 								Node.Counter.Add(counter);
@@ -310,14 +320,17 @@ namespace NBitcoin.Protocol
 								});
 							}
 						}
-						catch (OperationCanceledException)
+						catch (OperationCanceledException ex)
 						{
+							Logs.NodeServer.LogInformation($"Node.BeginListen: XXX6#: [{Node}][{Cancel.IsCancellationRequested}] Unhandled exception: {ex}");
 						}
 						catch (Exception ex)
 						{
+							Logs.NodeServer.LogInformation($"Node.BeginListen: XXX7#: [{Node}][{Cancel.IsCancellationRequested}] Unhandled exception: {ex}");
 							unhandledException = ex;
 						}
-						Logs.NodeServer.LogInformation("Stop listening");
+
+						Logs.NodeServer.LogInformation($"Node.BeginListen: [{Node}][{Cancel.IsCancellationRequested}] Stop listening");
 						Cleanup(unhandledException);
 					}
 				}).Start();
@@ -376,7 +389,7 @@ namespace NBitcoin.Protocol
 			}
 			private set
 			{
-				Logs.NodeServer.LogInformation("State changed from {stateFrom} to {stateTo}", _State, value);
+				Logs.NodeServer.LogInformation($"[{this}] State changed from {_State} to {value}");
 
 				var previous = _State;
 				_State = value;
@@ -385,7 +398,7 @@ namespace NBitcoin.Protocol
 					OnStateChanged(previous);
 					if (value == NodeState.Failed || value == NodeState.Offline)
 					{
-						Logs.NodeServer.LogInformation("Communication closed");
+						Logs.NodeServer.LogInformation($"[{this}] Communication closed");
 
 						OnDisconnected();
 					}
@@ -541,6 +554,7 @@ namespace NBitcoin.Protocol
 		/// <returns></returns>
 		public static Node Connect(Network network, AddressManager addrman, NodeConnectionParameters parameters = null, EndPoint[] connectedEndpoints = null)
 		{
+			Logs.NodeServer.LogWarning($"XXX#0900: Node.Connect with addrman");
 			parameters = parameters ?? new NodeConnectionParameters();
 			AddressManagerBehavior.SetAddrman(parameters, addrman);
 			return Connect(network, parameters, connectedEndpoints);
@@ -581,6 +595,7 @@ namespace NBitcoin.Protocol
 				parameters.ConnectCancellation.ThrowIfCancellationRequested();
 				if (addrman.Count == 0 || DateTimeOffset.UtcNow - start > TimeSpan.FromSeconds(60))
 				{
+					Logs.NodeServer.LogInformation($"XXX: Calling DISCOVER PEERS [parameters == null? {parameters is null}]");
 					addrmanBehavior.DiscoverPeers(network, parameters);
 					start = DateTimeOffset.UtcNow;
 				}
@@ -623,6 +638,7 @@ namespace NBitcoin.Protocol
 					continue;
 				try
 				{
+					Logs.NodeServer.LogWarning($"XXX#0911: Node.Connect: Connect to addr {addr}");
 					var timeout = new CancellationTokenSource(5000);
 					var param2 = parameters.Clone();
 					using (var cts = CancellationTokenSource.CreateLinkedTokenSource(parameters.ConnectCancellation, timeout.Token))
@@ -676,6 +692,7 @@ namespace NBitcoin.Protocol
 		public static Node Connect(Network network,
 								 string endpoint, NodeConnectionParameters parameters)
 		{
+			Logs.NodeServer.LogWarning($"XXX#0922: Node.Connect: Connect to string endpoint {endpoint}");
 			return Connect(network, Utils.ParseEndpoint(endpoint, network.DefaultPort), parameters);
 		}
 
@@ -685,6 +702,7 @@ namespace NBitcoin.Protocol
 								bool isRelay = true,
 								CancellationToken cancellation = default(CancellationToken))
 		{
+			Logs.NodeServer.LogWarning($"XXX#0933: Node.Connect: Connect to string endpoint {endpoint}");
 			return Connect(network, Utils.ParseEndpoint(endpoint, network.DefaultPort), myVersion, isRelay, cancellation);
 		}
 
@@ -693,6 +711,8 @@ namespace NBitcoin.Protocol
 							 NetworkAddress endpoint,
 							 NodeConnectionParameters parameters)
 		{
+			Logs.NodeServer.LogWarning($"XXX#0944: Node.ConnectAsync: Connect to endpoint {endpoint}");
+
 			if (endpoint == null)
 				throw new ArgumentNullException(nameof(endpoint));
 			string error = null;
@@ -721,7 +741,7 @@ namespace NBitcoin.Protocol
 							 NetworkAddress endpoint,
 							 NodeConnectionParameters parameters)
 		{
-
+			Logs.NodeServer.LogWarning($"XXX#0944: Node.Connect: Connect to network-address endpoint {endpoint}");
 			return ConnectAsync(network, endpoint, parameters).GetAwaiter().GetResult();
 		}
 
@@ -729,17 +749,21 @@ namespace NBitcoin.Protocol
 							 EndPoint endpoint,
 							 NodeConnectionParameters parameters)
 		{
+			Logs.NodeServer.LogWarning($"XXX#0944: Node.Connect: Connect to pure endpoint {endpoint}");
 			return ConnectAsync(network, endpoint, parameters).GetAwaiter().GetResult();
 		}
 
 		public static Task<Node> ConnectAsync(Network network, EndPoint endpoint, NodeConnectionParameters parameters = null)
 		{
+			Logs.NodeServer.LogWarning($"XXX#09888: Node.ConnectAsync: Connect to endpoint {endpoint}");
 			return ConnectAsync(network, endpoint, null, parameters);
 		}
 		public static Task<Node> ConnectAsync(Network network, string endpoint, NodeConnectionParameters parameters = null)
 		{
 			if (network is null)
 				throw new ArgumentNullException(nameof(network));
+
+			Logs.NodeServer.LogWarning($"XXX#09888: Node.ConnectAsync: Connect to string endpoint {endpoint}");
 			return ConnectAsync(network, Utils.ParseEndpoint(endpoint, network.DefaultPort), null, parameters);
 		}
 
@@ -795,6 +819,7 @@ namespace NBitcoin.Protocol
 				throw;
 			}
 
+			Logs.NodeServer.LogInformation($"XXX: Node.ConnectAsync: Create new node for peer {peer} [IsCancellationRequested={parameters.ConnectCancellation.IsCancellationRequested}]");
 			Node node = new Node(peer, network, parameters, socket, null);
 			return node;
 		}
@@ -1159,16 +1184,24 @@ namespace NBitcoin.Protocol
 
 		public void Disconnect()
 		{
+			Logs.NodeServer.LogInformation($"XXX: [START] Node.Disconnect[{this}]");
+
 			Disconnect(null, null);
+
+			Logs.NodeServer.LogInformation($"XXX: [STOP] Node.Disconnect[{this}]");
 		}
 
 		int _Disconnecting;
 
 		public void Disconnect(string reason, Exception exception = null)
 		{
+			Logs.NodeServer.LogInformation($"XXX: [START] Node.Disconnect[{this}][reason={reason}, exception={exception}]");
+
 			DisconnectAsync(reason, exception);
 			AssertNoListeningThread();
 			_Connection.Disconnected.WaitOne();
+
+			Logs.NodeServer.LogInformation($"XXX: [STOP][{this}]");
 		}
 
 		private void AssertNoListeningThread()
@@ -1178,16 +1211,32 @@ namespace NBitcoin.Protocol
 		}
 		public void DisconnectAsync()
 		{
+			Logs.NodeServer.LogInformation($"XXX: [START] Node.DisconnectAsync[][{this}]");
+
 			DisconnectAsync(null, null);
+
+			Logs.NodeServer.LogInformation($"XXX: [STOP] Node.DisconnectAsync[][{this}]");
 		}
+
 		public void DisconnectAsync(string reason, Exception exception = null)
 		{
-			if (!IsConnected)
-				return;
-			if (Interlocked.CompareExchange(ref _Disconnecting, 1, 0) == 1)
-				return;
+			Logs.NodeServer.LogInformation($"XXX: [START] Node.DisconnectAsync[{this}][reason={reason}, exception={exception}]");
 
-			Logs.NodeServer.LogInformation("Disconnection request {reason}", reason);
+			if (!IsConnected)
+			{
+				_Connection.Cancel.Cancel();
+
+				Logs.NodeServer.LogInformation($"XXX: [STOP] Node.DisconnectAsync[{this}][NOT-CONNECTED]");
+				return;
+			}
+
+			if (Interlocked.CompareExchange(ref _Disconnecting, 1, 0) == 1)
+			{
+				Logs.NodeServer.LogInformation($"XXX: [STOP] Node.DisconnectAsync[{this}][ALREADY-DISCONNECTING]");
+				return;
+			}
+
+			Logs.NodeServer.LogInformation($"[{this}] Disconnection request {reason}");
 
 			State = NodeState.Disconnecting;
 			_Connection.Cancel.Cancel();
@@ -1197,6 +1246,8 @@ namespace NBitcoin.Protocol
 					Reason = reason,
 					Exception = exception
 				};
+
+			Logs.NodeServer.LogInformation($"XXX: [STOP] Node.DisconnectAsync[{this}]");
 		}
 
 		TransactionOptions _PreferredTransactionOptions = TransactionOptions.All;

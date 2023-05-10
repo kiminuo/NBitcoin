@@ -1245,6 +1245,8 @@ namespace NBitcoin.Protocol
 									param2.TemplateBehaviors.Add(addrman);
 									if (socks != null)
 										param2.TemplateBehaviors.Add(socks);
+
+									Logs.NodeServer.LogInformation($"XXX: DISCOVER PEERS: Connecting to {p}");
 									n = Node.Connect(network, p, param2);
 									n.VersionHandshake(cancelConnection.Token);
 									n.MessageReceived += (s, a) =>

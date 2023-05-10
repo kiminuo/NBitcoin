@@ -295,6 +295,8 @@ namespace NBitcoin.Protocol
 					{
 						Time = DateTimeOffset.UtcNow
 					};
+
+					Logs.NodeServer.LogWarning($"XXX: NodeServer.ProcessMessageCore: Connect to peer {peer}");
 					var node = new Node(peer, Network, CreateNodeConnectionParameters(), message.Socket, version);
 
 					if (connectedToSelf)

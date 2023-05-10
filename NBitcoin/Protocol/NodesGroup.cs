@@ -153,7 +153,7 @@ namespace NBitcoin.Protocol
 					{
 						while (!_Disconnect.IsCancellationRequested && _ConnectedNodes.Count < MaximumNodeConnection)
 						{
-							Logs.NodeServer.LogInformation("Connected nodes {connectedNodeCount} / {maximumNodeCount} ", _ConnectedNodes.Count, MaximumNodeConnection);
+							Logs.NodeServer.LogInformation("XXX NodesGroup.StartConnecting: Connected nodes {connectedNodeCount} / {maximumNodeCount} ", _ConnectedNodes.Count, MaximumNodeConnection);
 							var parameters = _ConnectionParameters.Clone();
 							parameters.TemplateBehaviors.Add(new NodesGroupBehavior(this));
 							parameters.ConnectCancellation = _Disconnect.Token;
@@ -172,27 +172,30 @@ namespace NBitcoin.Protocol
 									AllowSameGroup ? WellKnownGroupSelectors.ByRandom : null;
 
 								var connectedPeers = _ConnectedNodes.Where(n => n.Peer is { }).Select(n => n.Peer.Endpoint).ToArray();
+
+								Logs.NodeServer.LogInformation("XXX NodesGroup.StartConnecting: About to call Node.Connect");
 								node = Node.Connect(_Network, parameters, connectedPeers, groupSelector);
 								using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(_Disconnect.Token))
 								{
 									timeout.CancelAfter(5000);
+									Logs.NodeServer.LogInformation($"XXX NodesGroup.StartConnecting: Sending version-handshake to {node}");
 									node.VersionHandshake(_Requirements, timeout.Token);
-									Logs.NodeServer.LogInformation("Node successfully connected to and handshaked");
+									Logs.NodeServer.LogInformation($"XXX NodesGroup.StartConnecting: Node [{node}] successfully connected to and handshaked");
 								}
 							}
 							catch (OperationCanceledException ex)
 							{
-								if (_Disconnect.Token.IsCancellationRequested)
-									break;
-								Logs.NodeServer.LogError(default, ex, "Timeout for picked node");
+								// if (_Disconnect.Token.IsCancellationRequested)
+								// 	break;
+								Logs.NodeServer.LogError(default, ex, "XXX NodesGroup.StartConnecting: Timeout for picked node");
 								if (node != null)
-									node.DisconnectAsync("Handshake timeout", ex);
+									node.DisconnectAsync($"XXX NodesGroup.StartConnecting: [{node}] Handshake timeout", ex);
 							}
 							catch (Exception ex)
 							{
-								Logs.NodeServer.LogError(default, ex, "Error while connecting to node");
+								Logs.NodeServer.LogError(default, ex, $"XXX NodesGroup.StartConnecting: [{node}] Error while connecting to node");
 								if (node != null)
-									node.DisconnectAsync("Error while connecting", ex);
+									node.DisconnectAsync($"XXX NodesGroup.StartConnecting: [{node}] Error while connecting", ex);
 							}
 
 						}
